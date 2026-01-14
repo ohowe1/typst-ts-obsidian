@@ -1,11 +1,10 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
+	"id": "typst-ts-obsidian",
+	"name": "Typst.ts Obsidian Plugin",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"description": "Typst rendering support for Obsidian using Typst.ts",
+	"author": "ohowe1",
+	"authorUrl": "https://github.com/ohowe1/typst-ts-obsidian.git",
 	"isDesktopOnly": false
 }
