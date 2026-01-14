@@ -3,7 +3,6 @@ import { $typst } from "@myriaddreamin/typst.ts";
 import typst_ts_web_compiler from "@myriaddreamin/typst-ts-web-compiler/pkg/typst_ts_web_compiler_bg.wasm";
 // @ts-ignore
 import typst_ts_renderer from "@myriaddreamin/typst-ts-renderer/pkg/typst_ts_renderer_bg.wasm";
-import { get } from "http";
 
 function htmlToNode(html: string) {
 	const template = document.createElement('template');
