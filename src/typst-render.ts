@@ -6,6 +6,7 @@ import typst_ts_renderer from "@myriaddreamin/typst-ts-renderer/pkg/typst_ts_ren
 
 function htmlToNode(html: string) {
 	const template = document.createElement('template');
+	// eslint-disable-next-line @microsoft/sdl/no-inner-html
 	template.innerHTML = html;
 	const nNodes = template.content.childNodes.length;
 	if (nNodes !== 1) {
@@ -23,12 +24,15 @@ function htmlToNode(html: string) {
 export function initTypst() {
 	$typst.setCompilerInitOptions({
 		getModule: () => {
+			// these are the binary wasm modules required by typst.ts, kinda a weird way to do it but i don't know a better way
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return typst_ts_web_compiler;
 		},
 	});
 
 	$typst.setRendererInitOptions({
 		getModule: () => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return typst_ts_renderer;
 		},
 	});
@@ -43,7 +47,9 @@ $${math}$
 
 	const parentElm = block ? elm.createDiv() : elm;
 	if (block) {
-		parentElm.style.padding = '1em 0';
+		parentElm.setCssProps({
+			'padding': '1em 0',
+		})
 	}
 
 	try {
@@ -71,8 +77,10 @@ $${math}$
 		}
 	} catch (e) {
 		const errorElm = parentElm.createDiv({ text: `Typst rendering error: ${e instanceof Error ? e.message : String(e) || "unknown error"}` });
-		errorElm.style.color = "red";
-		errorElm.style.fontStyle = "italic";
+		errorElm.setCssProps({
+			color: "red",
+			fontStyle: "italic",
+		});
 
 		console.error("Typst rendering error:", e);
 	}

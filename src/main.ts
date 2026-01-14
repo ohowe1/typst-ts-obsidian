@@ -19,7 +19,6 @@ export default class TypstTSObsidian extends Plugin {
 		initTypst()
 
 		patchDecoration(this, (builtInMathWidget) => {
-			console.log("patch succeeded")
 			// Wait for the view update to finish
 			setTimeout(() => {
 				this.rerender();

@@ -78,6 +78,8 @@ function patchMathWidget(plugin: TypstTSObsidian, widget: WidgetType): boolean {
 	// If we make the condition too strict, it may not work with the future version of Obsidian.
 	// On the other hand, if we make it too loose, it may misjudge another widget type by another plugin as
 	// the built-in math widget.
+
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const proto = widget.constructor.prototype;
 	const isObsidianBuiltinMathWidget =
 		Object.hasOwn(widget, "math") &&
@@ -99,16 +101,16 @@ function patchMathWidget(plugin: TypstTSObsidian, widget: WidgetType): boolean {
 
 						elm.toggleClass("math-block", block);
 						elm.toggleClass("cm-embed-block", block);
-						var editBlock = elm.find(".edit-block-button");
+						let editBlock = elm.find(".edit-block-button");
 						elm.empty();
-						
-						try {
-							renderTypst(math, block, elm);
-						} catch {
-							old.call(this, elm);
+
+						renderTypst(math, block, elm).catch((err) => {
+							console.error(err);
+						});
+
+						if (editBlock) {
+							elm.appendChild(editBlock)
 						}
-						
-						editBlock && elm.appendChild(editBlock)
 					};
 				},
 			})
