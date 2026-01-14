@@ -6,8 +6,8 @@ import typst_ts_renderer from "@myriaddreamin/typst-ts-renderer/pkg/typst_ts_ren
 
 function htmlToNode(html: string) {
 	const template = document.createElement('template');
-	// eslint-disable-next-line @microsoft/sdl/no-inner-html
-	template.innerHTML = html;
+
+
 	const nNodes = template.content.childNodes.length;
 	if (nNodes !== 1) {
 		throw new Error(
@@ -24,15 +24,14 @@ function htmlToNode(html: string) {
 export function initTypst() {
 	$typst.setCompilerInitOptions({
 		getModule: () => {
-			// these are the binary wasm modules required by typst.ts, kinda a weird way to do it but i don't know a better way
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return -- these are the binary wasm modules required by typst.ts, kinda a weird way to do it but i don't know a better way
 			return typst_ts_web_compiler;
 		},
 	});
 
 	$typst.setRendererInitOptions({
 		getModule: () => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return -- these are the binary wasm modules required by typst.ts, kinda a weird way to do it but i don't know a better way
 			return typst_ts_renderer;
 		},
 	});
@@ -52,9 +51,10 @@ $${math}$
 		// hacky
 		const value = svgString.replace(/fill="[^"]*"/g, 'fill="currentColor"');
 
-		const svgChildNode = htmlToNode(value);
+		const parser = new DOMParser();
+		const svgHTML = parser.parseFromString(value, 'text/html');
 
-		parentElm.appendChild(svgChildNode);
+		parentElm.appendChild(svgHTML.body.firstChild!);
 		let svgElementNode = parentElm.lastElementChild;
 
 		if (!svgElementNode) {

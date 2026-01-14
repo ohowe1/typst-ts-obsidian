@@ -79,7 +79,7 @@ function patchMathWidget(plugin: TypstTSObsidian, widget: WidgetType): boolean {
 	// On the other hand, if we make it too loose, it may misjudge another widget type by another plugin as
 	// the built-in math widget.
 
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- typescript doesn't know the type here, and we check it ourselves
 	const proto = widget.constructor.prototype;
 	const isObsidianBuiltinMathWidget =
 		Object.hasOwn(widget, "math") &&
