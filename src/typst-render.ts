@@ -45,12 +45,7 @@ export async function renderTypst(math: string, block: boolean, elm: HTMLElement
 $${math}$
 `;
 
-	const parentElm = block ? elm.createDiv() : elm;
-	if (block) {
-		parentElm.setCssProps({
-			'padding': '1em 0',
-		})
-	}
+	const parentElm = block ? elm.createDiv({ cls: "typst-block-parent" }) : elm;
 
 	try {
 		const value = await $typst.svg({ mainContent })
@@ -71,10 +66,8 @@ $${math}$
 		// scale from typst pixels to obsidian font size
 		svgElementNode.setAttribute("height", `${height / defaultEm}em`)
 		svgElementNode.setAttribute("width", `${width / defaultEm}em`)
+		svgElementNode.toggleClass("typst-block", block);
 
-		if (block) {
-			svgElementNode.setAttribute("style", `display: block; margin: 0 auto;`)
-		}
 	} catch (e) {
 		const errorElm = parentElm.createDiv({ text: `Typst rendering error: ${e instanceof Error ? e.message : String(e) || "unknown error"}` });
 		errorElm.setCssProps({

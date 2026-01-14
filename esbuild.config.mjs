@@ -41,7 +41,7 @@ const context = await esbuild.context({
 	minify: prod,
 	loader: {
 		".wasm": "binary"
-	}
+	},
 });
 
 if (prod) {
