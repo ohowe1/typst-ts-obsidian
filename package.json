@@ -21,7 +21,8 @@
 		"jiti": "2.6.1",
 		"tslib": "2.4.0",
 		"typescript": "^5.8.3",
-		"typescript-eslint": "8.35.1"
+		"typescript-eslint": "8.35.1",
+		"@types/mathjax": "^0.0.40"
 	},
 	"dependencies": {
 		"@codemirror/view": "^6.38.6",

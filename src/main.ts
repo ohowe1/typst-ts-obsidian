@@ -1,59 +1,33 @@
-import { MarkdownPreviewRenderer, MarkdownView, Notice, Plugin } from "obsidian";
-import { patchDecoration } from "patch-widget-type";
+import { around } from "monkey-around";
+import { loadMathJax, Notice, Plugin } from "obsidian";
 import { initTypst, renderTypst } from "typst-render";
 
+
 export default class TypstTSObsidian extends Plugin {
-	patchSucceeded: boolean;
+	uninstaller: () => void;
 
-	onload() {
-		this.patchSucceeded = false;
-
+	async onload() {
 		initTypst()
 
-		patchDecoration(this, (builtInMathWidget) => {
-			// Wait for the view update to finish
-			setTimeout(() => {
-				// this.rerender();
-				this.app.workspace.getActiveViewOfType(MarkdownView)?.previewMode.rerender(true);
-				// new Notice("Reload/restart the app to enable Typst math rendering.");
-			}, 100);
-		});
+		await loadMathJax();
 
-		MarkdownPreviewRenderer.registerPostProcessor((i) => {
-			console.log("hi")
-			console.log(i)
-			i.findAll(".math:not(.is-loaded-typst)").forEach((elm) => {
-				const math = elm.innerHTML;
-				elm.empty();
-				try {
-					renderTypst(math, elm.classList.contains("math-block"), elm);
-				} catch (e) {
-					// Handle error
-					console.error(e);
+		this.uninstaller = around(globalThis.MathJax, {
+			// @ts-expect-error -- not typed
+			tex2chtml(old) {
+				return function (math: string, options: { display: boolean }) {
+					return renderTypst(math, options.display)
 				}
-
-				elm.addClass("is-loaded-typst");
-				elm.addClass("is-loaded");
-			});
-		}, 1000)
-	}
-
-	onunload() {
-		new Notice("Reload/restart the app to restore the original math rendering.");
-	}
-
-	rerender() {
-		this.app.workspace.iterateAllLeaves((leaf) => {
-			if (leaf.view instanceof MarkdownView) {
-				console.log(leaf.view)
-				const eState = leaf.view.getEphemeralState();
-				console.log(eState)
-				const editor = leaf.view.editor;
-				console.log(editor)
-				editor.setValue(editor.getValue());
-				leaf.view.setEphemeralState(eState);
 			}
 		});
 	}
 
+	onUserEnable(): void {
+		new Notice("Typst.ts Math Blocks: Reload/restart the app to enable Typst rendering.");
+	}
+
+	onunload() {
+		this.uninstaller();
+
+		new Notice("Typst.ts Math Blocks: Reload/restart the app to disable Typst rendering.");
+	}
 }
