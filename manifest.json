@@ -1,7 +1,7 @@
 {
 	"id": "typst-ts-obsidian",
 	"name": "Typst.ts Obsidian",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"minAppVersion": "0.15.0",
 	"description": "Typst rendering support for Obsidian using Typst.ts",
 	"author": "ohowe1",
