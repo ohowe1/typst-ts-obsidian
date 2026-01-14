@@ -24,7 +24,7 @@ export class TypstTSObsidianSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName('Typst preamble')
-      // eslint-disable-next-line obsidianmd/ui/sentence-case
+      // eslint-disable-next-line obsidianmd/ui/sentence-case -- Typst is a proper noun
       .setDesc('Preamble for Typst rendering. You can use this to define macros.')
       .addTextArea(text => text
         .setPlaceholder('Enter your preamble')
