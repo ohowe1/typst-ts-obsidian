@@ -1,10 +1,10 @@
 {
-	"id": "typst-ts-obsidian",
-	"name": "Typst.ts Obsidian",
+	"id": "typst-ts-math",
+	"name": "Typst.ts Math Blocks",
 	"version": "1.0.1",
 	"minAppVersion": "0.15.0",
-	"description": "Typst rendering support for Obsidian using Typst.ts",
+	"description": "Typst rendering support for math blocks using Typst.ts.",
 	"author": "ohowe1",
-	"authorUrl": "https://github.com/ohowe1/typst-ts-obsidian.git",
+	"authorUrl": "https://github.com/ohowe1/",
 	"isDesktopOnly": false
 }
