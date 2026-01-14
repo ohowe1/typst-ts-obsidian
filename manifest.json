@@ -1,7 +1,7 @@
 {
 	"id": "typst-ts-math",
 	"name": "Typst.ts Math Blocks",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"minAppVersion": "0.15.0",
 	"description": "Typst rendering support for math blocks using Typst.ts.",
 	"author": "ohowe1",

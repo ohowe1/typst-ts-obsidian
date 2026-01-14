@@ -20,9 +20,11 @@ export function initTypst() {
 	});
 }
 
-export function renderTypst(math: string, block: boolean) {
+export function renderTypst(math: string, block: boolean, preamble?: string) {
 	const mainContent = `
 #set page(height: auto, width: auto, margin: 0pt)
+
+${preamble ?? ''}
 
 $${math}$
 `;
