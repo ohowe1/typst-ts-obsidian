@@ -1,6 +1,6 @@
 {
 	"name": "typst-ts-obsidian",
-	"version": "1.0.4",
+	"version": "1.0.5",
 	"description": "Typst rendering support for Obsidian using Typst.ts",
 	"main": "main.js",
 	"type": "module",

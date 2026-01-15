@@ -20,9 +20,10 @@ export function initTypst() {
 	});
 }
 
-export function renderTypst(math: string, block: boolean, preamble?: string) {
+export function renderTypst(math: string, block: boolean, preamble?: string, uncommonColor: string = "#a6a59f"): HTMLElement {
 	const mainContent = `
 #set page(height: auto, width: auto, margin: 0pt)
+#set text(fill: rgb("${uncommonColor}"))
 
 ${preamble ?? ''}
 
@@ -34,8 +35,12 @@ $${math}$
 	parent.toggleClass("typst-block-parent", block);
 
 	$typst.svg({ mainContent }).then((svgString) => {
-		// hacky replace to make svg use currentColor for fill
-		const value = svgString.replace(/fill="[^"]*"/g, 'fill="currentColor"');
+		// hacky replace to make svg use currentColor for fill and stroke
+		const value = svgString
+			.replaceAll(`fill="${uncommonColor}"`, 'fill="currentColor"')
+			.replaceAll(`stroke="${uncommonColor}"`, 'stroke="currentColor"');
+
+
 
 		const parser = new DOMParser();
 		const svgHTML = parser.parseFromString(value, 'text/html');
@@ -62,13 +67,13 @@ $${math}$
 			errorMessage = match[1].replace(/\\"/g, '"');
 		}
 		
-		const errorElm = parent.createDiv({ text: `Typst rendering error: ${errorMessage}` });
+		const errorElm = parent.createDiv({ text: `Typst error: ${errorMessage}` });
 		errorElm.setCssProps({
 			color: "red",
 			fontStyle: "italic",
 		});
 
-		console.error("Typst rendering error:", e);
+		console.error("Typst error:", e);
 	});
 
 	return parent;

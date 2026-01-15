@@ -16,7 +16,7 @@ export default class TypstTSObsidian extends Plugin {
 		await loadMathJax();
 
 		const tex2chtmlReplacement = (math: string, options: { display: boolean }) => {
-			return renderTypst(math, options.display, this.settings.typstPreamble);
+			return renderTypst(math, options.display, this.settings.typstPreamble, this.settings.uncommonColor);
 		}
 
 		this.uninstaller = around(globalThis.MathJax, {
