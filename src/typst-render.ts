@@ -10,7 +10,7 @@ export function initTypst() {
 			};
 		},
 	});
-
+	
 	$typst.setRendererInitOptions({
 		getModule: () => {
 			return {
@@ -20,46 +20,72 @@ export function initTypst() {
 	});
 }
 
+const cache = new Map<string, Element>();
+const pending = new Map<string, Promise<Element>>();
+
 export function renderTypst(math: string, block: boolean, preamble?: string, uncommonColor: string = "#a6a59f"): HTMLElement {
 	const mainContent = `
 #set page(height: auto, width: auto, margin: 0pt)
 #set text(fill: rgb("${uncommonColor}"))
-
-${preamble ?? ''}
-
+	
+	${preamble ?? ''}
+	
 $${math}$
 `;
-
+	
 	const parent = document.createElement("span");
-
 	parent.toggleClass("typst-block-parent", block);
-
-	$typst.svg({ mainContent }).then((svgString) => {
-		// hacky replace to make svg use currentColor for fill and stroke
-		const value = svgString
+	
+	const cacheKey = mainContent;
+	
+	if (cache.has(cacheKey)) {
+		parent.appendChild(cache.get(cacheKey)!.cloneNode(true));
+		return parent;
+	}
+	
+	let promise = pending.get(cacheKey);
+	if (!promise) {
+		promise = $typst.svg({ mainContent }).then((svgString) => {
+			// hacky replace to make svg use currentColor for fill and stroke
+			const value = svgString
 			.replaceAll(`fill="${uncommonColor}"`, 'fill="currentColor"')
 			.replaceAll(`stroke="${uncommonColor}"`, 'stroke="currentColor"');
-
-
-
-		const parser = new DOMParser();
-		const svgHTML = parser.parseFromString(value, 'text/html');
-
-		parent.appendChild(svgHTML.body.firstChild!);
-		let svgElementNode = parent.lastElementChild;
-
-		if (!svgElementNode) {
-			throw new Error("SVG element node undefined")
-		}
-
-		// typst's default font size
-		const defaultEm = 11;
-		const height = parseFloat(svgElementNode.getAttribute('data-height') || 'NaN');
-		const width = parseFloat(svgElementNode.getAttribute('data-width') || 'NaN');
-		// scale from typst pixels to obsidian font size
-		svgElementNode.setAttribute("height", `${height / defaultEm}em`)
-		svgElementNode.setAttribute("width", `${width / defaultEm}em`)
-
+			
+			const parser = new DOMParser();
+			const svgHTML = parser.parseFromString(value, 'text/html');
+			const svgElementNode = svgHTML.body.firstChild as Element | null;
+			
+			if (!svgElementNode) {
+				throw new Error("SVG element node undefined");
+			}
+			
+			// typst's default font size
+			const defaultEm = 11;
+			const height = parseFloat(svgElementNode.getAttribute('data-height') || 'NaN');
+			const width = parseFloat(svgElementNode.getAttribute('data-width') || 'NaN');
+			// scale from typst pixels to obsidian font size
+			svgElementNode.setAttribute("height", `${height / defaultEm}em`);
+			svgElementNode.setAttribute("width", `${width / defaultEm}em`);
+			
+			if (cache.size >= 5000) {
+				const firstKey = cache.keys().next().value as string | undefined;
+				if (firstKey !== undefined) {
+					cache.delete(firstKey);
+				}
+			}
+			cache.set(cacheKey, svgElementNode);
+			return svgElementNode;
+		});
+		
+		pending.set(cacheKey, promise);
+		void promise.then(
+			() => pending.delete(cacheKey),
+			() => pending.delete(cacheKey)
+		);
+	}
+	
+	promise.then((svgElementNode) => {
+		parent.appendChild(svgElementNode.cloneNode(true));
 	}).catch((e) => {
 		let errorMessage = e instanceof Error ? e.message : String(e) || "unknown error";
 		const match = errorMessage.match(/message:\s*"((?:[^"\\]|\\.)*)"/);
@@ -72,9 +98,9 @@ $${math}$
 			color: "red",
 			fontStyle: "italic",
 		});
-
+		
 		console.error("Typst error:", e);
 	});
-
+	
 	return parent;
 }
