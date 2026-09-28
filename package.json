@@ -1,6 +1,6 @@
 {
 	"name": "typst-ts-obsidian",
-	"version": "1.0.5",
+	"version": "1.0.7",
 	"description": "Typst rendering support for Obsidian using Typst.ts",
 	"main": "main.js",
 	"type": "module",
@@ -26,9 +26,9 @@
 	},
 	"dependencies": {
 		"@codemirror/view": "^6.38.6",
-		"@myriaddreamin/typst-ts-renderer": "^0.7.0-rc2",
-		"@myriaddreamin/typst-ts-web-compiler": "^0.7.0-rc2",
-		"@myriaddreamin/typst.ts": "^0.7.0-rc2",
+		"@myriaddreamin/typst-ts-renderer": "^0.7.0",
+		"@myriaddreamin/typst-ts-web-compiler": "^0.7.0",
+		"@myriaddreamin/typst.ts": "^0.7.0",
 		"monkey-around": "^3.0.0",
 		"obsidian": "latest"
 	}
