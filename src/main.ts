@@ -1,7 +1,7 @@
 import { around } from "monkey-around";
 import { loadMathJax, Notice, Plugin } from "obsidian";
 import { DEFAULT_SETTINGS, TypstTSObsidianSettings, TypstTSObsidianSettingTab } from "settings";
-import { initTypst, renderTypst } from "typst-render";
+import { initTypst, renderTypst, clearRenderCaches } from "typst-render";
 
 
 export default class TypstTSObsidian extends Plugin {
@@ -35,6 +35,7 @@ export default class TypstTSObsidian extends Plugin {
 
 	onunload() {
 		this.uninstaller();
+		clearRenderCaches();
 
 		new Notice("Typst.ts Math Blocks: Reload/restart the app to disable Typst rendering.");
 	}

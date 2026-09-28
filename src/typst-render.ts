@@ -23,6 +23,34 @@ export function initTypst() {
 const cache = new Map<string, Element>();
 const pending = new Map<string, Promise<Element>>();
 
+/** Maximum number of cached SVG elements to keep in memory. */
+const MAX_CACHE_SIZE = 500;
+
+/**
+ * Clear all render caches. Should be called on plugin unload to
+ * release DOM elements held in memory.
+ */
+export function clearRenderCaches() {
+	cache.clear();
+	pending.clear();
+}
+
+/**
+ * Reset the compiler before rendering to prevent source file accumulation.
+ *
+ * The $typst.svg() path internally uses getVector() → getCompiler() which,
+ * unlike getCompilerReset(), does NOT call compiler.reset(). Each call adds
+ * a new temp source file via addSource() that is never cleaned up (removeTmp
+ * calls unmapShadow which is a no-op for addSource files). This causes the
+ * WASM compiler's memory to grow indefinitely, making rendering progressively
+ * slower.
+ */
+async function renderSvg(mainContent: string): Promise<string> {
+	const compiler = await $typst.getCompiler();
+	await compiler.reset();
+	return $typst.svg({ mainContent });
+}
+
 export function renderTypst(math: string, block: boolean, preamble?: string, uncommonColor: string = "#a6a59f"): HTMLElement {
 	const mainContent = `
 #set page(height: auto, width: auto, margin: 0pt)
@@ -45,7 +73,7 @@ $${math}$
 	
 	let promise = pending.get(cacheKey);
 	if (!promise) {
-		promise = $typst.svg({ mainContent }).then((svgString) => {
+		promise = renderSvg(mainContent).then((svgString) => {
 			// hacky replace to make svg use currentColor for fill and stroke
 			const value = svgString
 			.replaceAll(`fill="${uncommonColor}"`, 'fill="currentColor"')
@@ -67,7 +95,7 @@ $${math}$
 			svgElementNode.setAttribute("height", `${height / defaultEm}em`);
 			svgElementNode.setAttribute("width", `${width / defaultEm}em`);
 			
-			if (cache.size >= 5000) {
+			if (cache.size >= MAX_CACHE_SIZE) {
 				const firstKey = cache.keys().next().value as string | undefined;
 				if (firstKey !== undefined) {
 					cache.delete(firstKey);
