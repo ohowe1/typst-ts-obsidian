@@ -20,8 +20,8 @@ export function initTypst() {
 	});
 }
 
-const cache = new Map<string, Element>();
-const pending = new Map<string, Promise<Element>>();
+const cache = new Map<string, string>();
+const pending = new Map<string, Promise<string>>();
 
 /** Maximum number of cached SVG elements to keep in memory. */
 const MAX_CACHE_SIZE = 500;
@@ -33,6 +33,20 @@ const MAX_CACHE_SIZE = 500;
 export function clearRenderCaches() {
 	cache.clear();
 	pending.clear();
+}
+
+/**
+ * Serial compilation queue — ensures only one WASM compilation runs
+ * at a time. Without this, concurrent renderTypst() calls race over
+ * the single-threaded compiler, causing resets mid-compilation.
+ */
+let compileQueue: Promise<void> = Promise.resolve();
+
+function enqueue<T>(fn: () => Promise<T>): Promise<T> {
+	const result = compileQueue.then(fn);
+	// Swallow errors so the queue continues processing
+	compileQueue = result.then(() => {}, () => {});
+	return result;
 }
 
 /**
@@ -51,6 +65,36 @@ async function renderSvg(mainContent: string): Promise<string> {
 	return $typst.svg({ mainContent });
 }
 
+/**
+ * Post-process an SVG string from the Typst compiler:
+ * - Replace the uncommon placeholder color with currentColor
+ * - Scale dimensions from typst points to em units
+ */
+function processSvgString(svgString: string, uncommonColor: string): string {
+	const value = svgString
+		.replaceAll(`fill="${uncommonColor}"`, 'fill="currentColor"')
+		.replaceAll(`stroke="${uncommonColor}"`, 'stroke="currentColor"');
+
+	const container = document.createElement('div');
+	// eslint-disable-next-line @microsoft/sdl/no-inner-html -- SVG from bundled WASM compiler, not untrusted input
+	container.innerHTML = value;
+	const svg = container.firstElementChild;
+
+	if (!svg) {
+		throw new Error("SVG element node undefined");
+	}
+
+	// typst's default font size
+	const defaultEm = 11;
+	const height = parseFloat(svg.getAttribute('data-height') || 'NaN');
+	const width = parseFloat(svg.getAttribute('data-width') || 'NaN');
+	// scale from typst pixels to obsidian font size
+	svg.setAttribute("height", `${height / defaultEm}em`);
+	svg.setAttribute("width", `${width / defaultEm}em`);
+
+	return container.innerHTML;
+}
+
 export function renderTypst(math: string, block: boolean, preamble?: string, uncommonColor: string = "#a6a59f"): HTMLElement {
 	const mainContent = `
 #set page(height: auto, width: auto, margin: 0pt)
@@ -67,33 +111,15 @@ $${math}$
 	const cacheKey = mainContent;
 	
 	if (cache.has(cacheKey)) {
-		parent.appendChild(cache.get(cacheKey)!.cloneNode(true));
+		// eslint-disable-next-line @microsoft/sdl/no-inner-html -- cached SVG from bundled WASM compiler
+		parent.innerHTML = cache.get(cacheKey)!;
 		return parent;
 	}
 	
 	let promise = pending.get(cacheKey);
 	if (!promise) {
-		promise = renderSvg(mainContent).then((svgString) => {
-			// hacky replace to make svg use currentColor for fill and stroke
-			const value = svgString
-			.replaceAll(`fill="${uncommonColor}"`, 'fill="currentColor"')
-			.replaceAll(`stroke="${uncommonColor}"`, 'stroke="currentColor"');
-			
-			const parser = new DOMParser();
-			const svgHTML = parser.parseFromString(value, 'text/html');
-			const svgElementNode = svgHTML.body.firstChild as Element | null;
-			
-			if (!svgElementNode) {
-				throw new Error("SVG element node undefined");
-			}
-			
-			// typst's default font size
-			const defaultEm = 11;
-			const height = parseFloat(svgElementNode.getAttribute('data-height') || 'NaN');
-			const width = parseFloat(svgElementNode.getAttribute('data-width') || 'NaN');
-			// scale from typst pixels to obsidian font size
-			svgElementNode.setAttribute("height", `${height / defaultEm}em`);
-			svgElementNode.setAttribute("width", `${width / defaultEm}em`);
+		promise = enqueue(() => renderSvg(mainContent)).then((svgString) => {
+			const processed = processSvgString(svgString, uncommonColor);
 			
 			if (cache.size >= MAX_CACHE_SIZE) {
 				const firstKey = cache.keys().next().value as string | undefined;
@@ -101,8 +127,8 @@ $${math}$
 					cache.delete(firstKey);
 				}
 			}
-			cache.set(cacheKey, svgElementNode);
-			return svgElementNode;
+			cache.set(cacheKey, processed);
+			return processed;
 		});
 		
 		pending.set(cacheKey, promise);
@@ -112,8 +138,9 @@ $${math}$
 		);
 	}
 	
-	promise.then((svgElementNode) => {
-		parent.appendChild(svgElementNode.cloneNode(true));
+	promise.then((svgHtml) => {
+		// eslint-disable-next-line @microsoft/sdl/no-inner-html -- SVG from bundled WASM compiler
+		parent.innerHTML = svgHtml;
 	}).catch((e) => {
 		let errorMessage = e instanceof Error ? e.message : String(e) || "unknown error";
 		const match = errorMessage.match(/message:\s*"((?:[^"\\]|\\.)*)"/);
